@@ -2250,17 +2250,6 @@ html&gt;body{padding:0}&lt;/style&gt;
   &lt;/section&gt;
 
   &lt;section id=&quot;panel-full&quot; class=&quot;stage&quot; role=&quot;tabpanel&quot; aria-labelledby=&quot;tab-full&quot; hidden&gt;
-    &lt;div class=&quot;batch-panel&quot; aria-label=&quot;Batch 维度流程&quot;&gt;
-      &lt;div class=&quot;batch-flow&quot; aria-label=&quot;Batch 维度流动&quot;&gt;
-        &lt;div class=&quot;batch-node&quot;&gt;&lt;strong&gt;输入 Token IDs&lt;/strong&gt;&lt;span class=&quot;shape&quot; id=&quot;batch-token-shape&quot;&gt;[B,T] = [2,4]&lt;/span&gt;&lt;/div&gt;
-        &lt;div class=&quot;batch-arrow&quot;&gt;↓&lt;/div&gt;
-        &lt;div class=&quot;batch-node&quot;&gt;&lt;strong&gt;Embedding&lt;/strong&gt;&lt;span class=&quot;shape&quot; id=&quot;batch-embed-shape&quot;&gt;[B,T,d] = [2,4,8]&lt;/span&gt;&lt;/div&gt;
-        &lt;div class=&quot;batch-arrow&quot;&gt;↓&lt;/div&gt;
-        &lt;div class=&quot;batch-node&quot;&gt;&lt;strong&gt;L × Decoder Block&lt;/strong&gt;&lt;span class=&quot;shape&quot; id=&quot;batch-block-shape&quot;&gt;[B,T,d] = [2,4,8]（每个样本独立处理）&lt;/span&gt;&lt;/div&gt;
-        &lt;div class=&quot;batch-arrow&quot;&gt;↓&lt;/div&gt;
-        &lt;div class=&quot;batch-node&quot;&gt;&lt;strong&gt;Logits&lt;/strong&gt;&lt;span class=&quot;shape&quot; id=&quot;batch-logits-shape&quot;&gt;[B,T,V] = [2,4,8]&lt;/span&gt;&lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
     &lt;div class=&quot;diagram&quot;&gt;
       &lt;div class=&quot;full-flow&quot; aria-label=&quot;完整 decoder-only 模型数据流&quot;&gt;
         &lt;button class=&quot;node io&quot; type=&quot;button&quot; data-full-step=&quot;text&quot;&gt;&lt;span class=&quot;name&quot;&gt;文本&lt;/span&gt;&lt;span class=&quot;shape&quot;&gt;“猫 追 老鼠 &amp;lt;eos&amp;gt;”&lt;/span&gt;&lt;/button&gt;&lt;span class=&quot;arrow&quot;&gt;→&lt;/span&gt;
@@ -2842,7 +2831,9 @@ html&gt;body{padding:0}&lt;/style&gt;
   root.querySelector(&#x27;#layer-slider&#x27;).addEventListener(&#x27;input&#x27;, e =&gt; { state.layers = Number(e.target.value); resetPlayback(); renderStack(); save(); });
   root.querySelectorAll(&#x27;[data-stack-step]&#x27;).forEach(n =&gt; n.addEventListener(&#x27;click&#x27;, () =&gt; {
     stopPlayback(&#x27;已停止自动播放，可继续查看层间模块。&#x27;);
-    navigateTo(&#x27;module&#x27;, { step: n.dataset.stackStep, parent: &#x27;stack&#x27; });
+    const key = n.dataset.stackStep;
+    const parent = [&#x27;ids&#x27;, &#x27;embed&#x27;, &#x27;finalnorm&#x27;, &#x27;lmhead&#x27;].includes(key) ? &#x27;full&#x27; : &#x27;stack&#x27;;
+    navigateTo(&#x27;module&#x27;, { step: key, parent });
   }));
 
   function renderFullTrace() {
