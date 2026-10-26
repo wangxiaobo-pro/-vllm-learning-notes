@@ -2119,12 +2119,13 @@ html&gt;body{padding:0}&lt;/style&gt;
     &lt;/div&gt;
     &lt;div class=&quot;autoplay-row&quot;&gt;
       &lt;button id=&quot;autoplay-model&quot; class=&quot;btn btn-primary&quot; type=&quot;button&quot; aria-pressed=&quot;false&quot;&gt;▶ 自动播放完整流程&lt;/button&gt;
-      &lt;button id=&quot;autoplay-explain&quot; class=&quot;btn&quot; type=&quot;button&quot; aria-pressed=&quot;false&quot;&gt;🎙 讲解播放&lt;/button&gt;
-      &lt;button id=&quot;stop-autoplay&quot; class=&quot;btn&quot; type=&quot;button&quot; hidden style=&quot;display:none&quot;&gt;⏹ 停止&lt;/button&gt;
+      &lt;button id=&quot;previous-step&quot; class=&quot;btn&quot; type=&quot;button&quot; disabled&gt;← 上一步&lt;/button&gt;
+      &lt;button id=&quot;next-step&quot; class=&quot;btn&quot; type=&quot;button&quot;&gt;下一步 →&lt;/button&gt;
+      &lt;button id=&quot;stop-autoplay&quot; class=&quot;btn&quot; type=&quot;button&quot; hidden style=&quot;display:none&quot;&gt;⏸ 暂停&lt;/button&gt;
       &lt;label class=&quot;playback-speed&quot;&gt;速度：&lt;select id=&quot;playback-speed&quot; class=&quot;form-select&quot; aria-label=&quot;播放速度&quot;&gt;&lt;option value=&quot;1800&quot; selected&gt;慢速 · 1.8 秒/步&lt;/option&gt;&lt;option value=&quot;1500&quot;&gt;舒缓 · 1.5 秒/步&lt;/option&gt;&lt;option value=&quot;1100&quot;&gt;标准 · 1.1 秒/步&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;
       &lt;span id=&quot;autoplay-status&quot; class=&quot;autoplay-status&quot; aria-live=&quot;polite&quot;&gt;&lt;/span&gt;
     &lt;/div&gt;
-    &lt;div id=&quot;playback-guide&quot; class=&quot;playback-guide&quot; aria-live=&quot;polite&quot; aria-atomic=&quot;true&quot;&gt;&lt;strong&gt;当前讲解：&lt;/strong&gt;&lt;span id=&quot;playback-narration-text&quot;&gt;点击“讲解播放”，让模型按步骤慢速走一遍。&lt;/span&gt;&lt;span id=&quot;playback-result&quot; class=&quot;playback-result&quot;&gt;计算结果会随着动画逐步生成。&lt;/span&gt;&lt;/div&gt;
+    &lt;div id=&quot;playback-guide&quot; class=&quot;playback-guide&quot; aria-live=&quot;polite&quot; aria-atomic=&quot;true&quot;&gt;&lt;strong&gt;当前步骤：&lt;/strong&gt;&lt;span id=&quot;playback-narration-text&quot;&gt;点击“自动播放完整流程”，或用“下一步”逐步查看；手动切换会暂停动画。&lt;/span&gt;&lt;span id=&quot;playback-result&quot; class=&quot;playback-result&quot;&gt;每一步的说明和示例结果会同步更新。&lt;/span&gt;&lt;/div&gt;
     &lt;div class=&quot;mode-row&quot;&gt;&lt;span class=&quot;subtle&quot;&gt;运行模式：&lt;/span&gt;&lt;button id=&quot;mode-train&quot; class=&quot;btn btn-primary&quot; type=&quot;button&quot; aria-pressed=&quot;true&quot;&gt;训练：Teacher Forcing&lt;/button&gt;&lt;button id=&quot;mode-infer&quot; class=&quot;btn&quot; type=&quot;button&quot; aria-pressed=&quot;false&quot;&gt;推理：逐 token 生成&lt;/button&gt;&lt;span id=&quot;mode-summary&quot; class=&quot;subtle&quot;&gt;训练时整段并行，标签右移一位。&lt;/span&gt;&lt;/div&gt;
     &lt;div class=&quot;batch-row&quot;&gt;&lt;label&gt;Batch B：&lt;select id=&quot;batch-size&quot; class=&quot;form-select&quot; aria-label=&quot;选择 batch 大小&quot;&gt;&lt;option value=&quot;1&quot;&gt;1&lt;/option&gt;&lt;option value=&quot;2&quot; selected&gt;2&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;4&lt;/option&gt;&lt;option value=&quot;8&quot;&gt;8&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;span id=&quot;batch-summary&quot; class=&quot;subtle&quot;&gt;每次并行处理 2 条序列，主干形状为 [2,4,8]。&lt;/span&gt;&lt;/div&gt;
   &lt;/div&gt;
@@ -2599,6 +2600,7 @@ html&gt;body{padding:0}&lt;/style&gt;
   }
   let playbackTimer = null;
   let playToken = 0;
+  let playbackIndex = -1;
   function updatePath() {
     const labels = { full: &#x27;完整模型总览&#x27;, stack: &#x27;完整模型 → 多层 Decoder Block&#x27;, single: &#x27;完整模型 → 多层 Block → 单层 Block&#x27;, advanced: &#x27;完整模型 → 并行与 MoE&#x27; };
     const moduleTitle = key =&gt; {
@@ -2629,12 +2631,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     if (playbackTimer) clearTimeout(playbackTimer);
     playbackTimer = null;
     state.playing = false;
-    const playBtn = root.querySelector(&#x27;#autoplay-model&#x27;);
-    const explainBtn = root.querySelector(&#x27;#autoplay-explain&#x27;);
-    const stopBtn = root.querySelector(&#x27;#stop-autoplay&#x27;);
-    if (playBtn) { playBtn.disabled = false; playBtn.setAttribute(&#x27;aria-pressed&#x27;, &#x27;false&#x27;); playBtn.textContent = &#x27;▶ 自动播放完整流程&#x27;; }
-    if (explainBtn) { explainBtn.disabled = false; explainBtn.setAttribute(&#x27;aria-pressed&#x27;, &#x27;false&#x27;); explainBtn.textContent = &#x27;🎙 讲解播放&#x27;; }
-    if (stopBtn) { stopBtn.hidden = true; stopBtn.style.display = &#x27;none&#x27;; }
+    updatePlaybackControls();
     if (message &amp;&amp; root.querySelector(&#x27;#autoplay-status&#x27;)) root.querySelector(&#x27;#autoplay-status&#x27;).textContent = message;
   }
   function setTab(name, opts) {
@@ -2663,6 +2660,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     if (name === &#x27;single&#x27;) renderSingleDetail(opts.step || &#x27;x&#x27;);
     if (name === &#x27;full&#x27;) updateFullStep(opts.step || &#x27;text&#x27;, Boolean(opts.auto));
     if (name === &#x27;module&#x27;) renderModulePage(state.moduleStep, state.moduleParent);
+    if (!opts.auto) syncPlaybackToRoute();
     const panel = panels[name];
     if (panel) { panel.classList.remove(&#x27;jump-in&#x27;); void panel.offsetWidth; panel.classList.add(&#x27;jump-in&#x27;); }
     if (root.querySelector(&#x27;#model-path&#x27;)) { root.querySelector(&#x27;#model-path&#x27;).classList.remove(&#x27;jump-path&#x27;); void root.querySelector(&#x27;#model-path&#x27;).offsetWidth; root.querySelector(&#x27;#model-path&#x27;).classList.add(&#x27;jump-path&#x27;); }
@@ -2746,8 +2744,8 @@ html&gt;body{padding:0}&lt;/style&gt;
     renderInternal(key);
   }
   root.querySelectorAll(&#x27;[data-step]&#x27;).forEach(n =&gt; n.addEventListener(&#x27;click&#x27;, () =&gt; { stopPlayback(&#x27;已停止自动播放，可继续查看单层模块。&#x27;); navigateTo(&#x27;module&#x27;, { step: n.dataset.step, parent: &#x27;single&#x27; }); }));
-  root.querySelector(&#x27;#query-token&#x27;).addEventListener(&#x27;change&#x27;, e =&gt; { stopPlayback(); state.query = Number(e.target.value); renderMatrix(); save(); });
-  root.querySelector(&#x27;#batch-size&#x27;).addEventListener(&#x27;change&#x27;, e =&gt; { stopPlayback(); state.batch = Number(e.target.value) || 2; renderBatch(); save(); });
+  root.querySelector(&#x27;#query-token&#x27;).addEventListener(&#x27;change&#x27;, e =&gt; { resetPlayback(); state.query = Number(e.target.value); renderMatrix(); save(); });
+  root.querySelector(&#x27;#batch-size&#x27;).addEventListener(&#x27;change&#x27;, e =&gt; { resetPlayback(); state.batch = Number(e.target.value) || 2; renderBatch(); save(); });
   root.querySelectorAll(&#x27;[data-parallel-step]&#x27;).forEach(n =&gt; n.addEventListener(&#x27;click&#x27;, () =&gt; {
     stopPlayback(&#x27;正在打开数据并行模块…&#x27;);
     navigateTo(&#x27;module&#x27;, { step: &#x27;parallel:&#x27; + n.dataset.parallelStep, parent: &#x27;advanced&#x27; });
@@ -2787,7 +2785,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     root.querySelector(&#x27;#stack-detail-why&#x27;).textContent = &#x27;让同一个位置反复吸收更高阶的上下文关系；每一层只增加一次加工深度，不改变主干宽度。&#x27;;
     root.querySelectorAll(&#x27;[data-layer-detail]&#x27;).forEach(x =&gt; x.classList.toggle(&#x27;active&#x27;, Number(x.dataset.layerDetail) === i));
   }
-  root.querySelector(&#x27;#layer-slider&#x27;).addEventListener(&#x27;input&#x27;, e =&gt; { stopPlayback(); state.layers = Number(e.target.value); renderStack(); save(); });
+  root.querySelector(&#x27;#layer-slider&#x27;).addEventListener(&#x27;input&#x27;, e =&gt; { state.layers = Number(e.target.value); resetPlayback(); renderStack(); save(); });
   root.querySelectorAll(&#x27;[data-stack-step]&#x27;).forEach(n =&gt; n.addEventListener(&#x27;click&#x27;, () =&gt; {
     stopPlayback(&#x27;已停止自动播放，可继续查看层间模块。&#x27;);
     navigateTo(&#x27;module&#x27;, { step: n.dataset.stackStep, parent: &#x27;stack&#x27; });
@@ -2851,7 +2849,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     root.querySelectorAll(&#x27;[data-full-step]&#x27;).forEach(x =&gt; x.classList.toggle(&#x27;selected&#x27;, x.dataset.fullStep === key));
     if (!auto &amp;&amp; root.querySelector(&#x27;#autoplay-status&#x27;) &amp;&amp; !state.playing) root.querySelector(&#x27;#autoplay-status&#x27;).textContent = &#x27;已选中：&#x27; + d[0];
   }
-  const playbackSteps = () =&gt; {
+  function playbackSteps() {
     const steps = [
       { type: &#x27;full&#x27;, key: &#x27;text&#x27;, label: &#x27;文本&#x27; },
       { type: &#x27;full&#x27;, key: &#x27;tokenizer&#x27;, label: &#x27;Tokenizer&#x27; },
@@ -2863,46 +2861,85 @@ html&gt;body{padding:0}&lt;/style&gt;
     for (let i = 2; i &lt;= state.layers; i++) steps.push({ type: &#x27;stack&#x27;, layer: i, label: &#x27;Block &#x27; + i + &#x27; · 层间输出&#x27; });
     [&#x27;finalnorm&#x27;, &#x27;lmhead&#x27;, &#x27;prob&#x27;, &#x27;next&#x27;].forEach(key =&gt; steps.push({ type: &#x27;full&#x27;, key, label: fullDetails[key][0] }));
     return steps;
-  };
-  function startPlayback(explain) {
-    stopPlayback();
-    const token = ++playToken;
-    state.playing = true;
+  }
+  function updatePlaybackControls() {
+    const last = playbackSteps().length - 1;
     const playBtn = root.querySelector(&#x27;#autoplay-model&#x27;);
-    const explainBtn = root.querySelector(&#x27;#autoplay-explain&#x27;);
+    playBtn.disabled = Boolean(state.playing);
+    playBtn.setAttribute(&#x27;aria-pressed&#x27;, String(Boolean(state.playing)));
+    playBtn.textContent = state.playing ? &#x27;▶ 播放中…&#x27; : (playbackIndex === last ? &#x27;↻ 重新播放&#x27; : (playbackIndex &gt;= 0 ? &#x27;▶ 继续播放&#x27; : &#x27;▶ 自动播放完整流程&#x27;));
+    root.querySelector(&#x27;#previous-step&#x27;).disabled = playbackIndex &lt;= 0;
+    root.querySelector(&#x27;#next-step&#x27;).disabled = playbackIndex &gt;= last;
     const stopBtn = root.querySelector(&#x27;#stop-autoplay&#x27;);
-    playBtn.disabled = true;
-    playBtn.setAttribute(&#x27;aria-pressed&#x27;, &#x27;true&#x27;);
-    playBtn.textContent = &#x27;▶ 播放中…&#x27;;
-    if (explainBtn) {
-      explainBtn.disabled = true;
-      explainBtn.setAttribute(&#x27;aria-pressed&#x27;, String(Boolean(explain)));
-      explainBtn.textContent = explain ? &#x27;🎙 讲解中…&#x27; : &#x27;🎙 讲解播放&#x27;;
-    }
-    stopBtn.hidden = false;
-    stopBtn.style.display = &#x27;&#x27;;
+    stopBtn.hidden = !state.playing;
+    stopBtn.style.display = state.playing ? &#x27;&#x27; : &#x27;none&#x27;;
+  }
+  function updatePlaybackPosition() {
     const sequence = playbackSteps();
-    let index = 0;
+    const step = sequence[playbackIndex];
+    if (step) {
+      updatePlaybackNarration(step, playbackIndex, sequence.length);
+      root.querySelector(&#x27;#autoplay-status&#x27;).textContent = (state.playing ? &#x27;播放中 · &#x27; : &#x27;手动查看 · &#x27;) + (playbackIndex + 1) + &#x27;/&#x27; + sequence.length + &#x27; · &#x27; + step.label;
+    } else {
+      root.querySelector(&#x27;#autoplay-status&#x27;).textContent = &#x27;尚未开始 · 共 &#x27; + sequence.length + &#x27; 步&#x27;;
+      root.querySelector(&#x27;#playback-narration-text&#x27;).textContent = &#x27;点击“自动播放完整流程”，或用“下一步”逐步查看；手动切换会暂停动画。&#x27;;
+      root.querySelector(&#x27;#playback-result&#x27;).textContent = &#x27;每一步的说明和示例结果会同步更新。&#x27;;
+    }
+    updatePlaybackControls();
+  }
+  function resetPlayback() {
+    stopPlayback();
+    playbackIndex = -1;
+    updatePlaybackPosition();
+  }
+  function syncPlaybackToRoute() {
+    // 直接点进某个模块后，上/下一步也从这个模块衔接，避免沿用旧位置。
+    const parent = state.moduleParent;
+    const singleKey = state.tab === &#x27;single&#x27; ? &#x27;x&#x27; : state.moduleStep;
+    playbackIndex = playbackSteps().findIndex(step =&gt; {
+      if (state.tab === &#x27;stack&#x27;) return step.type === &#x27;stack&#x27; &amp;&amp; step.layer === state.selectedLayer;
+      if (state.tab === &#x27;single&#x27; || (state.tab === &#x27;module&#x27; &amp;&amp; parent === &#x27;single&#x27;)) {
+        return state.selectedLayer === 1 &amp;&amp; step.type === &#x27;single&#x27; &amp;&amp; step.key === singleKey;
+      }
+      return state.tab === &#x27;module&#x27; &amp;&amp; parent !== &#x27;advanced&#x27; &amp;&amp; step.type === &#x27;full&#x27; &amp;&amp; step.key === state.moduleStep;
+    });
+    updatePlaybackPosition();
+  }
+  function showPlaybackStep(index) {
+    const sequence = playbackSteps();
+    if (index &lt; 0 || index &gt;= sequence.length) return;
+    playbackIndex = index;
+    const step = sequence[index];
+    if (step.type === &#x27;full&#x27;) navigateTo(&#x27;module&#x27;, { step: step.key, parent: &#x27;full&#x27;, auto: true });
+    if (step.type === &#x27;stack&#x27;) navigateTo(&#x27;stack&#x27;, { layer: step.layer, auto: true });
+    if (step.type === &#x27;single&#x27;) navigateTo(&#x27;module&#x27;, { step: step.key, parent: &#x27;single&#x27;, layer: step.layer || 1, auto: true });
+    updatePlaybackPosition();
+  }
+  function movePlayback(delta) {
+    stopPlayback();
+    showPlaybackStep(Math.max(0, Math.min(playbackIndex + delta, playbackSteps().length - 1)));
+  }
+  function startPlayback() {
+    stopPlayback();
+    const token = playToken;
+    if (playbackIndex &gt;= playbackSteps().length - 1) playbackIndex = -1;
+    state.playing = true;
     const run = () =&gt; {
-      if (token !== playToken) return;
-      const step = sequence[index];
-      if (!step) { stopPlayback(explain ? &#x27;讲解播放完成：已走完一遍完整模型。&#x27; : &#x27;自动播放完成：已走完一遍完整模型。&#x27;); return; }
-      // Full 模块统一走模块页，避免依赖顶部的“单层/层间”入口；模块页仍可通过面包屑返回。
-      if (step.type === &#x27;full&#x27;) navigateTo(&#x27;module&#x27;, { step: step.key, parent: &#x27;full&#x27;, auto: true });
-      if (step.type === &#x27;stack&#x27;) navigateTo(&#x27;stack&#x27;, { layer: step.layer, auto: true });
-      // 单层步骤也走模块页，动画不会依赖顶部的单层入口；parent 用于显示返回路径。
-      if (step.type === &#x27;single&#x27;) navigateTo(&#x27;module&#x27;, { step: step.key, parent: &#x27;single&#x27;, layer: step.layer || 1, auto: true });
-      if (typeof updatePlaybackNarration === &#x27;function&#x27;) updatePlaybackNarration(step, index, sequence.length);
-      root.querySelector(&#x27;#autoplay-status&#x27;).textContent = (index + 1) + &#x27;/&#x27; + sequence.length + &#x27; · &#x27; + step.label;
-      index += 1;
-      const speed = Math.max(500, Number(root.querySelector(&#x27;#playback-speed&#x27;) &amp;&amp; root.querySelector(&#x27;#playback-speed&#x27;).value) || 1600);
+      if (token !== playToken || !state.playing) return;
+      if (playbackIndex &gt;= playbackSteps().length - 1) {
+        stopPlayback(&#x27;播放完成 · &#x27; + playbackSteps().length + &#x27;/&#x27; + playbackSteps().length + &#x27; · 可用“上一步”回看。&#x27;);
+        return;
+      }
+      showPlaybackStep(playbackIndex + 1);
+      const speed = Math.max(500, Number(root.querySelector(&#x27;#playback-speed&#x27;).value) || 1800);
       playbackTimer = setTimeout(run, speed);
     };
     run();
   }
-  root.querySelector(&#x27;#autoplay-model&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; startPlayback(false));
-  root.querySelector(&#x27;#autoplay-explain&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; startPlayback(true));
-  root.querySelector(&#x27;#stop-autoplay&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; stopPlayback(&#x27;已停止自动播放。&#x27;));
+  root.querySelector(&#x27;#autoplay-model&#x27;).addEventListener(&#x27;click&#x27;, startPlayback);
+  root.querySelector(&#x27;#previous-step&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; movePlayback(-1));
+  root.querySelector(&#x27;#next-step&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; movePlayback(1));
+  root.querySelector(&#x27;#stop-autoplay&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; { stopPlayback(); updatePlaybackPosition(); });
 
   function setMode(mode, opts) {
     opts = opts || {};
@@ -2914,8 +2951,8 @@ html&gt;body{padding:0}&lt;/style&gt;
     root.querySelector(&#x27;#full-callout&#x27;).innerHTML = train ? &#x27;&lt;strong&gt;训练的关键：&lt;/strong&gt;整段序列并行计算，右移 labels 作为答案，用交叉熵让每个位置学会预测下一个真实 token。&#x27; : &#x27;&lt;strong&gt;推理的关键：&lt;/strong&gt;每次只取最后位置的 logits 选一个 token，再把它追加到上下文；历史 K/V 放进 KV cache 以减少重复计算。&#x27;;
     if (!opts.silent) save();
   }
-  root.querySelector(&#x27;#mode-train&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; { stopPlayback(); setMode(&#x27;train&#x27;); });
-  root.querySelector(&#x27;#mode-infer&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; { stopPlayback(); setMode(&#x27;infer&#x27;); });
+  root.querySelector(&#x27;#mode-train&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; { resetPlayback(); setMode(&#x27;train&#x27;); });
+  root.querySelector(&#x27;#mode-infer&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; { resetPlayback(); setMode(&#x27;infer&#x27;); });
   root.querySelectorAll(&#x27;[data-full-step]&#x27;).forEach(n =&gt; n.addEventListener(&#x27;click&#x27;, () =&gt; {
     const key = n.dataset.fullStep;
     stopPlayback(&#x27;已停止自动播放，可继续查看完整模型。&#x27;);
@@ -2929,7 +2966,9 @@ html&gt;body{padding:0}&lt;/style&gt;
   if (!panels[state.tab]) state.tab = &#x27;full&#x27;;
   setTab(state.tab, { auto: true });
   renderMatrix(); renderBatch(); renderSingleDetail(&#x27;x&#x27;); renderStack(); renderFullTrace(); updateFullStep(&#x27;text&#x27;, true); showAdvancedDetail(&#x27;parallel&#x27;, &#x27;batch&#x27;); showAdvancedDetail(&#x27;moe&#x27;, &#x27;input&#x27;); if (state.tab === &#x27;module&#x27;) renderModulePage(state.moduleStep, state.moduleParent); setMode(state.mode, { silent: true });
-  root.addEventListener(&#x27;openai:set_globals&#x27;, e =&gt; { const next = e.detail &amp;&amp; e.detail.globals &amp;&amp; e.detail.globals.widgetState; if (next &amp;&amp; next.modelContent) { try { const incoming = JSON.parse(next.modelContent); if (incoming.tab &amp;&amp; incoming.tab !== state.tab &amp;&amp; Date.now() - localWriteAt &lt; 5000) return; Object.assign(state, incoming); state.playing = false; if (!panels[state.tab]) state.tab = &#x27;full&#x27;; root.querySelector(&#x27;#query-token&#x27;).value = String(state.query); root.querySelector(&#x27;#layer-slider&#x27;).value = String(state.layers); root.querySelector(&#x27;#batch-size&#x27;).value = String(state.batch || 2); setTab(state.tab, { auto: true }); renderMatrix(); renderBatch(); renderSingleDetail(&#x27;x&#x27;); renderStack(); if (state.tab === &#x27;module&#x27;) renderModulePage(state.moduleStep, state.moduleParent); else updateFullStep(&#x27;text&#x27;, true); showAdvancedDetail(&#x27;parallel&#x27;, &#x27;batch&#x27;); showAdvancedDetail(&#x27;moe&#x27;, &#x27;input&#x27;); setMode(state.mode, { silent: true }); } catch (_) {} } });
+  state.playing = false;
+  syncPlaybackToRoute();
+  root.addEventListener(&#x27;openai:set_globals&#x27;, e =&gt; { const next = e.detail &amp;&amp; e.detail.globals &amp;&amp; e.detail.globals.widgetState; if (next &amp;&amp; next.modelContent) { try { const incoming = JSON.parse(next.modelContent); if (incoming.tab &amp;&amp; incoming.tab !== state.tab &amp;&amp; Date.now() - localWriteAt &lt; 5000) return; stopPlayback(); Object.assign(state, incoming); state.playing = false; if (!panels[state.tab]) state.tab = &#x27;full&#x27;; root.querySelector(&#x27;#query-token&#x27;).value = String(state.query); root.querySelector(&#x27;#layer-slider&#x27;).value = String(state.layers); root.querySelector(&#x27;#batch-size&#x27;).value = String(state.batch || 2); setTab(state.tab, { auto: true }); renderMatrix(); renderBatch(); renderSingleDetail(&#x27;x&#x27;); renderStack(); if (state.tab === &#x27;module&#x27;) renderModulePage(state.moduleStep, state.moduleParent); else updateFullStep(&#x27;text&#x27;, true); showAdvancedDetail(&#x27;parallel&#x27;, &#x27;batch&#x27;); showAdvancedDetail(&#x27;moe&#x27;, &#x27;input&#x27;); setMode(state.mode, { silent: true }); syncPlaybackToRoute(); } catch (_) {} } });
 })();
 &lt;/script&gt;
 
