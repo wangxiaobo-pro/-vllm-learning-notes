@@ -1904,6 +1904,8 @@ html&gt;body{padding:0}&lt;/style&gt;
     #llm-map #panel-module .diagram { max-width: 760px; margin: 0 auto; }
     #llm-map .module-route-toolbar { margin-bottom: 12px; }
     #llm-map .module-route-toolbar .nav-path { margin-left: 2px; }
+    #llm-map .return-action { border-color: var(--active); color: var(--active); background: color-mix(in srgb, var(--active) 10%, transparent); font-weight: 600; }
+    #llm-map .return-action:hover, #llm-map .return-action:focus-visible { background: color-mix(in srgb, var(--active) 18%, transparent); }
     #llm-map #module-page-canvas { min-height: 64px; }
     @media (max-width: 650px) { #llm-map .internal-branches { grid-template-columns: 1fr; } }
     #llm-map .kv { width: 100%; border-collapse: collapse; }
@@ -2137,13 +2139,12 @@ html&gt;body{padding:0}&lt;/style&gt;
       &lt;div class=&quot;step-status-meta&quot;&gt;&lt;span id=&quot;current-step-route&quot; class=&quot;step-status-route&quot;&gt;完整模型总览&lt;/span&gt;&lt;span id=&quot;current-step-io&quot;&gt;等待点击“下一步”&lt;/span&gt;&lt;/div&gt;
     &lt;/div&gt;
     &lt;div id=&quot;playback-guide&quot; class=&quot;playback-guide&quot; aria-live=&quot;polite&quot; aria-atomic=&quot;true&quot;&gt;&lt;strong&gt;当前步骤：&lt;/strong&gt;&lt;span id=&quot;playback-narration-text&quot;&gt;点击“自动播放完整流程”，或用“下一步”逐步查看；手动切换会暂停动画。&lt;/span&gt;&lt;span id=&quot;playback-result&quot; class=&quot;playback-result&quot;&gt;每一步的说明和示例结果会同步更新。&lt;/span&gt;&lt;/div&gt;
-    &lt;div class=&quot;mode-row&quot;&gt;&lt;strong&gt;运行模式：&lt;/strong&gt;&lt;span class=&quot;code-chip&quot;&gt;推理 · 逐 token 生成&lt;/span&gt;&lt;span class=&quot;subtle&quot;&gt;每次只取最后位置的 logits，选择一个 token 后追加到上下文。&lt;/span&gt;&lt;/div&gt;
     &lt;div class=&quot;batch-row&quot;&gt;&lt;label&gt;Batch B：&lt;select id=&quot;batch-size&quot; class=&quot;form-select&quot; aria-label=&quot;选择 batch 大小&quot;&gt;&lt;option value=&quot;1&quot;&gt;1&lt;/option&gt;&lt;option value=&quot;2&quot; selected&gt;2&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;4&lt;/option&gt;&lt;option value=&quot;8&quot;&gt;8&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;span id=&quot;batch-summary&quot; class=&quot;subtle&quot;&gt;每次并行处理 2 条序列，主干形状为 [2,4,8]。&lt;/span&gt;&lt;/div&gt;
   &lt;/div&gt;
 
   &lt;section id=&quot;panel-single&quot; class=&quot;stage&quot; role=&quot;region&quot; aria-label=&quot;单层 Transformer Block&quot; hidden&gt;
     &lt;div class=&quot;toolbar&quot;&gt;
-      &lt;button class=&quot;btn btn-ghost&quot; type=&quot;button&quot; data-nav=&quot;stack&quot;&gt;← 返回多层 Block&lt;/button&gt;
+      &lt;button class=&quot;btn btn-ghost return-action&quot; type=&quot;button&quot; data-nav=&quot;stack&quot;&gt;← 返回多层 Block&lt;/button&gt;
       &lt;label&gt;查看哪个查询词？
         &lt;select id=&quot;query-token&quot; class=&quot;form-select&quot; aria-label=&quot;选择查询词&quot;&gt;
           &lt;option value=&quot;0&quot;&gt;猫（位置 0）&lt;/option&gt;
@@ -2220,7 +2221,7 @@ html&gt;body{padding:0}&lt;/style&gt;
 
   &lt;section id=&quot;panel-stack&quot; class=&quot;stage&quot; role=&quot;region&quot; aria-label=&quot;多层 Decoder Block&quot; hidden&gt;
     &lt;div class=&quot;toolbar&quot;&gt;
-      &lt;button class=&quot;btn btn-ghost&quot; type=&quot;button&quot; data-nav=&quot;full&quot;&gt;← 返回完整模型&lt;/button&gt;
+      &lt;button class=&quot;btn btn-ghost return-action&quot; type=&quot;button&quot; data-nav=&quot;full&quot;&gt;← 返回完整模型&lt;/button&gt;
       &lt;label&gt;Block 层数 L：&lt;output id=&quot;layer-count&quot;&gt;3&lt;/output&gt;
         &lt;input id=&quot;layer-slider&quot; class=&quot;form-range&quot; type=&quot;range&quot; min=&quot;2&quot; max=&quot;6&quot; value=&quot;3&quot; step=&quot;1&quot; aria-label=&quot;调整 Block 层数&quot;&gt;
       &lt;/label&gt;
@@ -2338,8 +2339,8 @@ html&gt;body{padding:0}&lt;/style&gt;
 
   &lt;section id=&quot;panel-module&quot; class=&quot;stage module-route&quot; role=&quot;region&quot; aria-label=&quot;模块内部详情&quot; hidden&gt;
     &lt;div class=&quot;toolbar module-route-toolbar&quot;&gt;
-      &lt;button class=&quot;btn btn-ghost&quot; type=&quot;button&quot; data-nav=&quot;full&quot;&gt;← 返回完整模型&lt;/button&gt;
-      &lt;button id=&quot;module-back-parent&quot; class=&quot;btn btn-ghost&quot; type=&quot;button&quot; hidden&gt;返回上一级&lt;/button&gt;
+      &lt;button class=&quot;btn btn-ghost return-action&quot; type=&quot;button&quot; data-nav=&quot;full&quot;&gt;← 返回完整模型&lt;/button&gt;
+      &lt;button id=&quot;module-back-parent&quot; class=&quot;btn btn-ghost return-action&quot; type=&quot;button&quot; hidden&gt;返回上一级&lt;/button&gt;
       &lt;span class=&quot;nav-path&quot; id=&quot;module-path&quot;&gt;完整模型 → 模块&lt;/span&gt;
     &lt;/div&gt;
     &lt;div class=&quot;diagram&quot;&gt;
