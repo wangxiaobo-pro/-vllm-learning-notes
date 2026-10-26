@@ -2250,8 +2250,7 @@ html&gt;body{padding:0}&lt;/style&gt;
   &lt;/section&gt;
 
   &lt;section id=&quot;panel-full&quot; class=&quot;stage&quot; role=&quot;tabpanel&quot; aria-labelledby=&quot;tab-full&quot; hidden&gt;
-    &lt;div class=&quot;batch-panel&quot; aria-label=&quot;Batch 输入示意&quot;&gt;
-      &lt;div class=&quot;mode-row&quot; style=&quot;margin:0&quot;&gt;&lt;strong&gt;Batch 输入：&lt;/strong&gt;&lt;span class=&quot;code-chip&quot;&gt;B = &lt;span id=&quot;batch-panel-value&quot;&gt;2&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;subtle&quot;&gt;每个 batch 样本都有自己的 T 个 token，但共享同一套模型参数。大小可在顶部 Batch 控件调整。&lt;/span&gt;&lt;/div&gt;
+    &lt;div class=&quot;batch-panel&quot; aria-label=&quot;Batch 维度流程&quot;&gt;
       &lt;div class=&quot;batch-flow&quot; aria-label=&quot;Batch 维度流动&quot;&gt;
         &lt;div class=&quot;batch-node&quot;&gt;&lt;strong&gt;输入 Token IDs&lt;/strong&gt;&lt;span class=&quot;shape&quot; id=&quot;batch-token-shape&quot;&gt;[B,T] = [2,4]&lt;/span&gt;&lt;/div&gt;
         &lt;div class=&quot;batch-arrow&quot;&gt;↓&lt;/div&gt;
@@ -2261,7 +2260,6 @@ html&gt;body{padding:0}&lt;/style&gt;
         &lt;div class=&quot;batch-arrow&quot;&gt;↓&lt;/div&gt;
         &lt;div class=&quot;batch-node&quot;&gt;&lt;strong&gt;Logits&lt;/strong&gt;&lt;span class=&quot;shape&quot; id=&quot;batch-logits-shape&quot;&gt;[B,T,V] = [2,4,8]&lt;/span&gt;&lt;/div&gt;
       &lt;/div&gt;
-      &lt;div class=&quot;batch-example&quot; id=&quot;batch-example&quot;&gt;示例：batch[0]=[1,2,3,7]（猫 追 老鼠 &amp;lt;eos&amp;gt;）；batch[1]=[4,5,6,7]（鸟 吃 米 &amp;lt;eos&amp;gt;）。Transformer 会把两行放在同一个 batch 中并行计算。&lt;/div&gt;
     &lt;/div&gt;
     &lt;div class=&quot;diagram&quot;&gt;
       &lt;div class=&quot;full-flow&quot; aria-label=&quot;完整 decoder-only 模型数据流&quot;&gt;
