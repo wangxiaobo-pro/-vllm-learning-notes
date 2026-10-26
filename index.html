@@ -1933,6 +1933,15 @@ html&gt;body{padding:0}&lt;/style&gt;
     #llm-map .callout { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--active); background: color-mix(in srgb, var(--active) 8%, transparent); }
     #llm-map .autoplay-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 12px; }
     #llm-map .autoplay-status { color: var(--soft); font-size: 0.86em; min-height: 1.2em; }
+    #llm-map .step-status { margin: 10px 0 14px; padding: 11px 13px; border-left: 4px solid var(--active); background: color-mix(in srgb, var(--active) 8%, transparent); }
+    #llm-map .step-status-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+    #llm-map .step-status-kicker { color: var(--soft); font-size: 0.8em; }
+    #llm-map .step-status-title { font-size: 1.06em; font-weight: 600; }
+    #llm-map .step-status-count { margin-left: auto; color: var(--active); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.86em; }
+    #llm-map .step-progress { height: 6px; margin-top: 8px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--muted) 85%, transparent); }
+    #llm-map .step-progress-bar { height: 100%; width: 0; border-radius: inherit; background: var(--active); transition: width 220ms ease; }
+    #llm-map .step-status-meta { display: flex; flex-wrap: wrap; gap: 5px 14px; margin-top: 7px; color: var(--soft); font-size: 0.82em; }
+    #llm-map .step-status-route { color: var(--ink); }
     #llm-map .playback-guide { margin: 8px 0 12px; padding: 10px 12px; border-left: 3px solid var(--active); background: color-mix(in srgb, var(--active) 7%, transparent); }
     #llm-map .playback-guide strong { font-weight: 500; }
     #llm-map .playback-guide .playback-result { display: block; margin-top: 5px; color: var(--soft); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.84em; overflow-wrap: anywhere; }
@@ -2124,6 +2133,11 @@ html&gt;body{padding:0}&lt;/style&gt;
       &lt;button id=&quot;stop-autoplay&quot; class=&quot;btn&quot; type=&quot;button&quot; hidden style=&quot;display:none&quot;&gt;⏸ 暂停&lt;/button&gt;
       &lt;label class=&quot;playback-speed&quot;&gt;速度：&lt;select id=&quot;playback-speed&quot; class=&quot;form-select&quot; aria-label=&quot;播放速度&quot;&gt;&lt;option value=&quot;1800&quot; selected&gt;慢速 · 1.8 秒/步&lt;/option&gt;&lt;option value=&quot;1500&quot;&gt;舒缓 · 1.5 秒/步&lt;/option&gt;&lt;option value=&quot;1100&quot;&gt;标准 · 1.1 秒/步&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;
       &lt;span id=&quot;autoplay-status&quot; class=&quot;autoplay-status&quot; aria-live=&quot;polite&quot;&gt;&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;step-status&quot; aria-live=&quot;polite&quot; aria-atomic=&quot;true&quot; aria-label=&quot;当前模型步骤&quot;&gt;
+      &lt;div class=&quot;step-status-head&quot;&gt;&lt;span class=&quot;step-status-kicker&quot;&gt;当前所在步骤&lt;/span&gt;&lt;strong id=&quot;current-step-title&quot; class=&quot;step-status-title&quot;&gt;尚未开始&lt;/strong&gt;&lt;span id=&quot;current-step-count&quot; class=&quot;step-status-count&quot;&gt;第 0 / 18 步&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;step-progress&quot; role=&quot;progressbar&quot; aria-label=&quot;完整模型流程进度&quot; aria-valuemin=&quot;0&quot; aria-valuemax=&quot;18&quot; aria-valuenow=&quot;0&quot;&gt;&lt;div id=&quot;step-progress-bar&quot; class=&quot;step-progress-bar&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+      &lt;div class=&quot;step-status-meta&quot;&gt;&lt;span id=&quot;current-step-route&quot; class=&quot;step-status-route&quot;&gt;完整模型总览&lt;/span&gt;&lt;span id=&quot;current-step-io&quot;&gt;等待点击“下一步”&lt;/span&gt;&lt;/div&gt;
     &lt;/div&gt;
     &lt;div id=&quot;playback-guide&quot; class=&quot;playback-guide&quot; aria-live=&quot;polite&quot; aria-atomic=&quot;true&quot;&gt;&lt;strong&gt;当前步骤：&lt;/strong&gt;&lt;span id=&quot;playback-narration-text&quot;&gt;点击“自动播放完整流程”，或用“下一步”逐步查看；手动切换会暂停动画。&lt;/span&gt;&lt;span id=&quot;playback-result&quot; class=&quot;playback-result&quot;&gt;每一步的说明和示例结果会同步更新。&lt;/span&gt;&lt;/div&gt;
     &lt;div class=&quot;mode-row&quot;&gt;&lt;span class=&quot;subtle&quot;&gt;运行模式：&lt;/span&gt;&lt;button id=&quot;mode-train&quot; class=&quot;btn btn-primary&quot; type=&quot;button&quot; aria-pressed=&quot;true&quot;&gt;训练：Teacher Forcing&lt;/button&gt;&lt;button id=&quot;mode-infer&quot; class=&quot;btn&quot; type=&quot;button&quot; aria-pressed=&quot;false&quot;&gt;推理：逐 token 生成&lt;/button&gt;&lt;span id=&quot;mode-summary&quot; class=&quot;subtle&quot;&gt;训练时整段并行，标签右移一位。&lt;/span&gt;&lt;/div&gt;
@@ -2581,6 +2595,53 @@ html&gt;body{padding:0}&lt;/style&gt;
     text.textContent = guide[0];
     result.textContent = &#x27;本步计算结果：&#x27; + guide[1] + (step &amp;&amp; total ? &#x27;  · 进度 &#x27; + (index + 1) + &#x27;/&#x27; + total : &#x27;&#x27;);
   }
+  function playbackStepMeta(step) {
+    const b = Math.max(1, Number(state.batch) || 2);
+    const main = &#x27;[&#x27; + b + &#x27;,4,8]&#x27;;
+    if (!step) return { title: &#x27;尚未开始&#x27;, route: &#x27;完整模型总览&#x27;, io: &#x27;等待点击“下一步”&#x27; };
+    if (step.type === &#x27;stack&#x27;) return { title: &#x27;Block &#x27; + step.layer + &#x27; · 层间输出&#x27;, route: &#x27;完整模型 → 多层 Decoder Block → Block &#x27; + step.layer, io: &#x27;输入 X&#x27; + (step.layer - 1) + &#x27; &#x27; + main + &#x27; → 输出 X&#x27; + step.layer + &#x27; &#x27; + main };
+    if (step.type === &#x27;single&#x27;) {
+      const io = {
+        x: &#x27;Embedding / 上一层 → X &#x27; + main,
+        norm1: &#x27;X &#x27; + main + &#x27; → N₁ &#x27; + main,
+        qkv: &#x27;N₁ &#x27; + main + &#x27; → Q/K/V [&#x27; + b + &#x27;,2,4,4]&#x27;,
+        attn: &#x27;Q/K/V [&#x27; + b + &#x27;,2,4,4] → context &#x27; + main,
+        add1: &#x27;X + Attention &#x27; + main + &#x27; → H₁ &#x27; + main,
+        norm2: &#x27;H₁ &#x27; + main + &#x27; → N₂′ &#x27; + main,
+        mlp: &#x27;N₂′ &#x27; + main + &#x27; → MLP &#x27; + main,
+        add2: &#x27;H₁ + MLP &#x27; + main + &#x27; → Y &#x27; + main
+      };
+      return { title: &#x27;Block &#x27; + (step.layer || 1) + &#x27; · &#x27; + step.label, route: &#x27;完整模型 → 多层 Decoder Block → 单层 Block&#x27;, io: io[step.key] || (&#x27;输入 → 输出 &#x27; + main) };
+    }
+    const full = {
+      text: [&#x27;输入：字符串“猫 追 老鼠 &lt;eos&gt;”&#x27;, &#x27;输出：待分词文本&#x27;],
+      tokenizer: [&#x27;输入：文本&#x27;, &#x27;输出：Token IDs [1,2,3,7]&#x27;],
+      embedding: [&#x27;输入：Token IDs [&#x27; + b + &#x27;,4]&#x27;, &#x27;输出：Embedding &#x27; + main],
+      finalnorm: [&#x27;输入：最后一层 Xᴸ &#x27; + main, &#x27;输出：归一化后的 &#x27; + main],
+      lmhead: [&#x27;输入：隐藏向量 [8]&#x27;, &#x27;输出：logits [8]&#x27;],
+      prob: [&#x27;输入：logits [8]&#x27;, &#x27;输出：概率分布 [8]&#x27;],
+      next: [&#x27;输入：概率分布&#x27;, &#x27;输出：下一个 token&#x27;]
+    };
+    const pair = full[step.key] || [&#x27;输入：上一步结果&#x27;, &#x27;输出：当前模块结果&#x27;];
+    return { title: step.label, route: &#x27;完整模型 → &#x27; + step.label, io: pair[0] + &#x27; → &#x27; + pair[1] };
+  }
+  function updateCurrentStepCard(step, index, total) {
+    const meta = playbackStepMeta(step);
+    const title = root.querySelector(&#x27;#current-step-title&#x27;);
+    const count = root.querySelector(&#x27;#current-step-count&#x27;);
+    const route = root.querySelector(&#x27;#current-step-route&#x27;);
+    const io = root.querySelector(&#x27;#current-step-io&#x27;);
+    const bar = root.querySelector(&#x27;#step-progress-bar&#x27;);
+    const progress = root.querySelector(&#x27;.step-progress&#x27;);
+    const totalSteps = total || playbackSteps().length;
+    const current = step &amp;&amp; index &gt;= 0 ? index + 1 : 0;
+    if (title) title.textContent = meta.title;
+    if (count) count.textContent = &#x27;第 &#x27; + current + &#x27; / &#x27; + totalSteps + &#x27; 步&#x27;;
+    if (route) route.textContent = meta.route;
+    if (io) io.textContent = meta.io;
+    if (bar) bar.style.width = (totalSteps ? (current / totalSteps) * 100 : 0) + &#x27;%&#x27;;
+    if (progress) progress.setAttribute(&#x27;aria-valuenow&#x27;, String(current));
+  }
   const shapeRows = [
     [&#x27;主干输入（两条样本）&#x27;, &#x27;[2,4,8]&#x27;], [&#x27;每头 Q/K/V&#x27;, &#x27;[2,2,4,4]&#x27;], [&#x27;注意力矩阵&#x27;, &#x27;[2,2,4,4]&#x27;], [&#x27;MLP 中间层&#x27;, &#x27;[2,4,16]&#x27;], [&#x27;Block 输出&#x27;, &#x27;[2,4,8]&#x27;]
   ];
@@ -2877,6 +2938,7 @@ html&gt;body{padding:0}&lt;/style&gt;
   function updatePlaybackPosition() {
     const sequence = playbackSteps();
     const step = sequence[playbackIndex];
+    updateCurrentStepCard(step, playbackIndex, sequence.length);
     if (step) {
       updatePlaybackNarration(step, playbackIndex, sequence.length);
       root.querySelector(&#x27;#autoplay-status&#x27;).textContent = (state.playing ? &#x27;播放中 · &#x27; : &#x27;手动查看 · &#x27;) + (playbackIndex + 1) + &#x27;/&#x27; + sequence.length + &#x27; · &#x27; + step.label;
