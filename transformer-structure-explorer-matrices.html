@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>Transformer 数据流探索器 · 矩阵计算版</title>
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#fafbfc,#15181d);--fg:light-dark(#243041,#e3e8f0);--soft:light-dark(#5c697a,#aebacb);--line:light-dark(#dce2e9,#343f4e);--panel:light-dark(#fff,#1c222b);--accent:light-dark(#195fc3,#88b8ff);--wash:light-dark(#edf4ff,#24354e);--good:light-dark(#176942,#85d7af)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,"Microsoft YaHei",sans-serif;font-size:14px;line-height:1.6}button,select,input{font:inherit}button,select{color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:7px 12px}button{cursor:pointer}button:hover{background:var(--wash)}button:disabled{opacity:.45;cursor:default}button:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}.primary:hover{filter:brightness(.94);background:var(--accent)}.return{color:var(--accent);background:var(--wash);font-weight:600;border-color:var(--accent)}
+main{max-width:1180px;margin:auto;padding:25px 24px 70px}h1{font-size:25px;font-weight:600;margin:0 0 6px}h2{font-size:20px;font-weight:600;margin:10px 0}h3{font-size:16px;font-weight:600;margin:0}p{margin:7px 0}.muted{color:var(--soft)}.intro{margin-bottom:18px}.controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:12px 0}.controls label{display:flex;align-items:center;gap:7px}.controls select{max-width:240px}.controls input{width:100px}.example{padding:7px 0;border-bottom:1px solid var(--line);margin:12px 0}.example summary{cursor:pointer;color:var(--accent)}.example p{margin:8px 0}.status{border-left:4px solid var(--accent);padding:10px 14px;background:var(--wash);margin:14px 0}.status-line{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.badge{background:var(--accent);color:var(--bg);padding:2px 9px;border-radius:5px}.progress{height:4px;background:var(--line);margin:9px 0}.progress>div{height:100%;background:var(--accent);transition:width .35s}.narration{color:var(--soft);margin:0}.breadcrumbs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:18px 0}.breadcrumbs button{padding:5px 10px}.view{animation:arrive .32s ease-out}.view-title{margin-bottom:16px}.flow{display:flex;flex-direction:column;gap:0}.flow-row{display:grid;grid-template-columns:minmax(165px,220px) minmax(0,1fr);gap:24px;align-items:start;padding:16px 0;border-bottom:1px solid var(--line)}.flow-row:last-child{border-bottom:0}.module-node{text-align:left;padding:17px 16px;min-height:78px;width:100%;display:flex;flex-direction:column;gap:5px;background:var(--panel)}.module-node small{color:var(--soft)}.flow-row.current>.module-node{border:2px solid var(--accent);background:var(--wash);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}.current-tag{font-size:12px;color:var(--accent);font-weight:600}.flow-arrow{display:block;color:var(--soft);text-align:center;width:220px;font-size:22px;line-height:1.2;padding:5px}.io{min-width:0;display:grid;gap:14px}.io-section{min-width:0}.io-label{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:5px;letter-spacing:.1em}.matrix-block{min-width:0;margin:0 0 10px}.matrix-title{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;margin-bottom:4px}.matrix-title strong{font-weight:500}.matrix-title small{color:var(--soft);font-size:12px}.matrix-scroll{overflow-x:auto;max-width:100%;padding-bottom:2px}.matrix{border-collapse:collapse;font-family:ui-monospace,Consolas,monospace;font-size:12px;font-variant-numeric:tabular-nums;width:100%;line-height:1.55}.matrix td{padding:4px 7px;text-align:right;white-space:nowrap;background:var(--panel);border-bottom:1px solid var(--line)}.matrix th{padding:3px 7px;color:var(--soft);text-align:right;font-weight:400;font-size:11px;white-space:nowrap}.matrix th:first-child{text-align:left;min-width:55px}.matrix .chosen td,.matrix .chosen th{background:var(--wash)}.matrix .masked{color:var(--soft)}.raw-text{padding:6px 0;overflow-wrap:anywhere}.pending{color:var(--soft);padding:10px 0}.formula{font-family:ui-monospace,Consolas,monospace;color:var(--soft);overflow-wrap:anywhere;font-size:12px}.operation-info{margin:0 0 20px;max-width:900px}.operation-info p{margin:5px 0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}.section-divider{margin:25px 0 8px}.slice-note{font-size:12px;color:var(--soft);margin:8px 0}.legend-row{display:flex;gap:14px;flex-wrap:wrap}.model-tag{font-size:12px;color:var(--soft)}[hidden]{display:none!important}.weight-grid .matrix{width:auto;min-width:100%}.weight-grid{max-width:100%;min-width:0}footer{color:var(--soft);font-size:12px;border-top:1px solid var(--line);margin-top:25px;padding-top:12px}.text-link{color:var(--accent);background:transparent;border:0;padding:3px 0;text-align:left}
+@keyframes arrive{from{opacity:.35;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){.view{animation:none}.progress>div{transition:none}}@media(max-width:760px){main{padding:16px 12px 45px}.flow-row{grid-template-columns:1fr;gap:12px}.module-node{min-height:0}.flow-arrow{width:100%}.matrix td{padding:4px 5px}.controls{gap:7px}h1{font-size:22px}.controls label{flex-wrap:wrap}}@media(min-width:1500px){main{max-width:1260px}}
+.page-switch{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}.page-switch a{padding:8px 14px;border:1px solid var(--line);border-radius:7px;color:var(--fg);background:var(--panel);text-decoration:none}.page-switch a:hover{background:var(--wash)}.page-switch a[aria-current="page"]{color:var(--accent);background:var(--wash);border-color:var(--accent);font-weight:600}.page-switch a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.matrix-disclosure summary{cursor:pointer;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel);overflow-wrap:anywhere}
+.matrix-disclosure summary:hover{background:var(--wash)}
+.matrix-disclosure summary::marker{color:var(--accent)}
+.matrix-disclosure summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.matrix-disclosure summary .matrix-title{display:inline-flex;vertical-align:top;width:calc(100% - 24px);margin:0}
+.matrix-toggle{margin-left:auto;color:var(--accent);font-size:12px}
+.matrix-disclosure .when-open,.matrix-disclosure[open] .when-closed{display:none}
+.matrix-disclosure[open] .when-open{display:inline}
+.matrix-disclosure[open]>.matrix-scroll{margin-top:8px}
+</style>
+</head>
+<body>
+<main id="matrix-app">
+  <nav class="page-switch" aria-label="学习页面">
+    <a href="transformer-structure-explorer.html">结构讲解</a>
+    <a href="transformer-structure-explorer-matrices.html" aria-current="page">真实矩阵计算</a>
+  </nav>
+  <header class="intro">
+    <h1>Transformer 数据流探索器</h1>
+    <p class="muted">从输入到输出，沿同一套矩阵看清每一步。</p>
+    <details class="example">
+      <summary>贯穿全页的具体示例</summary>
+      <p>样本 0：猫 追 老鼠 &lt;eos&gt; → [1, 2, 3, 7]；样本 1：鸟 吃 米 &lt;eos&gt; → [4, 5, 6, 7]。Batch 大于 2 时循环使用这两条样本。</p>
+      <p>固定教学参数：T=4，d=8，h=2，每头 4 维，SwiGLU 中间宽度 16，词表大小 8。词表：[&lt;pad&gt;, 猫, 追, 老鼠, 鸟, 吃, 米, &lt;eos&gt;]。</p>
+      <p>这是<strong>未训练的小模型</strong>，矩阵数值由固定参数实际计算，生成的词不代表语言能力。显示保留 3 位小数，后续计算使用未舍入数值。输入末尾的 &lt;eos&gt; 在此作为已有 token 参与一次前向演示。</p>
+      <p>每层参数独立；Embedding 与 LM Head 不共享。参数量：128 + 656 × L + 8（最后的 RMSNorm），L=3 时共 2,104 个参数。不下载模型或图片。</p>
+    </details>
+  </header>
+  <div class="controls" aria-label="播放控制">
+    <button id="play" class="primary">▶ 自动播放完整流程</button>
+    <button id="prev" disabled>← 上一步</button>
+    <button id="next">下一步 →</button>
+    <button id="pause" hidden>⏸ 暂停</button>
+  </div>
+  <div class="status" aria-live="polite" aria-atomic="true">
+    <div class="status-line"><span id="stage" class="badge">自由查看</span><strong id="step-title">完整模型</strong><span id="step-count" class="muted"></span></div>
+    <div class="progress" role="progressbar" aria-label="完整流程进度" aria-valuemin="0" aria-valuemax="18" aria-valuenow="0"><div id="progress-bar" style="width:0"></div></div>
+    <p id="narration" class="narration">点击模块查看内部计算，或按“下一步”沿模型逐步运行。</p>
+  </div>
+  <div class="controls" aria-label="矩阵查看范围">
+    <label>Batch <select id="batch"><option>1</option><option selected>2</option><option>4</option><option>8</option></select></label>
+    <label>查看样本 <select id="sample"></select></label>
+    <label>注意力头 <select id="head"><option value="0">Head 0</option><option value="1">Head 1</option></select></label>
+    <label>高亮位置 <select id="position"></select></label>
+  </div>
+  <p class="slice-note" id="slice-note"></p>
+  <nav id="breadcrumbs" class="breadcrumbs" aria-label="模型层级导航"></nav>
+  <section id="view" class="view" aria-live="polite"></section>
+  <footer>本页所有模块共用同一条计算链；输入输出、层间传递、动画结果保持一致。</footer>
+</main>
+<script>
+/*
+ * A fully calculated, deterministic teaching Transformer.
+ * The small fixed parameters below are NOT trained model weights.
+ * All intermediate values use JavaScript double precision; round only in the UI.
+ * Tensor convention: [batch, token, feature], heads [batch, head, token, feature].
+ */
+const ToyEngine = (() => {
+  'use strict';
+
+  const VOCAB = ['<pad>', '猫', '追', '老鼠', '鸟', '吃', '米', '<eos>'];
+  const EXAMPLES = [[1, 2, 3, 7], [4, 5, 6, 7]];
+  const EPSILON = 1e-5;
+  const HEADS = 2;
+  const HEAD_DIM = 4;
+
+  // Fixed arithmetic construction rather than an unseeded random generator.
+  // The definition and salt completely determine every visible parameter.
+  const matrix = (rows, cols, salt, scale = 0.025) =>
+    Array.from({ length: rows }, (_, i) => Array.from({ length: cols }, (_, j) =>
+      (((i + 1) * 13 + (j + 1) * 7 + salt * 11 + (i + 1) * (j + 1) * 3) % 17 - 8) * scale));
+  const mapRows = (tensor, fn) => tensor.map(sample => sample.map(fn));
+  const dot = (x, y) => x.reduce((sum, value, i) => sum + value * y[i], 0);
+  const multiplyRow = (row, weight) => weight[0].map((_, j) =>
+    row.reduce((sum, value, i) => sum + value * weight[i][j], 0));
+  const linear = (tensor, weight) => mapRows(tensor, row => multiplyRow(row, weight));
+  const add = (a, b) => a.map((sample, n) => sample.map((row, t) => row.map((value, d) => value + b[n][t][d])));
+  const softmax = row => {
+    const max = Math.max(...row);
+    const exponentials = row.map(x => Math.exp(x - max));
+    const sum = exponentials.reduce((a, b) => a + b, 0);
+    return exponentials.map(x => x / sum);
+  };
+  const silu = value => value / (1 + Math.exp(-value));
+
+  function rmsNorm(input, gamma = Array(8).fill(1), epsilon = EPSILON) {
+    const squares = mapRows(input, row => row.map(x => x * x));
+    const meanSquare = mapRows(squares, row => [row.reduce((a, b) => a + b, 0) / row.length]);
+    const rms = mapRows(meanSquare, row => [Math.sqrt(row[0] + epsilon)]);
+    const normalized = input.map((sample, b) => sample.map((row, t) => row.map(x => x / rms[b][t][0])));
+    const output = mapRows(normalized, row => row.map((x, d) => x * gamma[d]));
+    return { input, squares, meanSquare, rms, normalized, gamma, epsilon, output };
+  }
+
+  function splitHeads(tensor) {
+    return tensor.map(sample => Array.from({ length: HEADS }, (_, h) =>
+      sample.map(row => row.slice(h * HEAD_DIM, (h + 1) * HEAD_DIM))));
+  }
+
+  function mergeHeads(tensor) {
+    return tensor.map(sample => sample[0].map((_, t) => sample.flatMap(head => head[t])));
+  }
+
+  // Adjacent coordinate pairs: (0,1), (2,3). theta_i = position / 10000^(2*i/d_head).
+  function rope(tensor) {
+    return tensor.map(sample => sample.map(head => head.map((row, t) => {
+      const result = [];
+      for (let pair = 0; pair < HEAD_DIM / 2; pair++) {
+        const angle = t / Math.pow(10000, 2 * pair / HEAD_DIM);
+        const cosine = Math.cos(angle), sine = Math.sin(angle);
+        const x = row[2 * pair], y = row[2 * pair + 1];
+        result.push(x * cosine - y * sine, x * sine + y * cosine);
+      }
+      return result;
+    })));
+  }
+
+  function swiglu(input, wg, wu, wd) {
+    const gate = linear(input, wg);
+    const up = linear(input, wu);
+    const activated = mapRows(gate, row => row.map(silu));
+    const gated = activated.map((sample, b) => sample.map((row, t) => row.map((x, d) => x * up[b][t][d])));
+    const output = linear(gated, wd);
+    return { input, wg, wu, gate, up, activated, gated, wd, output };
+  }
+
+  function blockForward(input, layerIndex = 0) {
+    const salt = layerIndex * 8;
+    const gamma1 = Array.from({ length: 8 }, (_, d) => 0.96 + ((d + layerIndex) % 5) * 0.02);
+    const gamma2 = Array.from({ length: 8 }, (_, d) => 0.98 + ((d + layerIndex * 2) % 4) * 0.02);
+    const norm1 = rmsNorm(input, gamma1);
+    const wq = matrix(8, 8, salt + 1);
+    const wk = matrix(8, 8, salt + 2);
+    const wv = matrix(8, 8, salt + 3);
+    const qFlat = linear(norm1.output, wq);
+    const kFlat = linear(norm1.output, wk);
+    const vFlat = linear(norm1.output, wv);
+    const qBefore = splitHeads(qFlat), kBefore = splitHeads(kFlat), v = splitHeads(vFlat);
+    const q = rope(qBefore), k = rope(kBefore);
+    const scores = q.map((sample, b) => sample.map((head, h) =>
+      head.map(query => k[b][h].map(key => dot(query, key)))));
+    const scale = Math.sqrt(HEAD_DIM);
+    const scaled = scores.map(sample => sample.map(head => head.map(row => row.map(x => x / scale))));
+    const masked = scaled.map(sample => sample.map(head => head.map((row, t) =>
+      row.map((x, j) => j > t ? -Infinity : x))));
+    const attention = masked.map(sample => sample.map(head => head.map(softmax)));
+    const context = attention.map((sample, b) => sample.map((head, h) => head.map(weights =>
+      Array.from({ length: HEAD_DIM }, (_, d) => weights.reduce((sum, a, t) => sum + a * v[b][h][t][d], 0)))));
+    const merged = mergeHeads(context);
+    const wo = matrix(8, 8, salt + 4);
+    const attnOut = linear(merged, wo);
+    const residual1 = add(input, attnOut);
+    const norm2 = rmsNorm(residual1, gamma2);
+    const ffn = swiglu(norm2.output, matrix(8, 16, salt + 5), matrix(8, 16, salt + 6), matrix(16, 8, salt + 7));
+    const mlp = ffn.output;
+    const output = add(residual1, mlp);
+    return {
+      index: layerIndex, input, norm1, wq, wk, wv, qFlat, kFlat, vFlat, qBefore, kBefore, v, q, k,
+      scores, scale, scaled, masked, attention, context, merged, wo, attnOut, residual1, norm2,
+      wg: ffn.wg, wu: ffn.wu, gate: ffn.gate, up: ffn.up, activated: ffn.activated,
+      gated: ffn.gated, wd: ffn.wd, mlp, output
+    };
+  }
+
+  function run({ batch = 2, layers = 3 } = {}) {
+    batch = Number(batch); layers = Number(layers);
+    if (![1, 2, 4, 8].includes(batch)) throw new RangeError('batch must be 1, 2, 4, or 8');
+    if (!Number.isInteger(layers) || layers < 2 || layers > 6) throw new RangeError('layers must be an integer from 2 to 6');
+    const config = { batch, layers, B: batch, T: 4, d: 8, h: 2, dh: 4, dff: 16, L: layers, V: 8,
+      epsilon: EPSILON, ropeTheta: 10000, trained: false, dtype: 'JavaScript float64',
+      sampling: 'greedy argmax', batchRepeats: batch > 2 };
+    const ids = Array.from({ length: batch }, (_, b) => EXAMPLES[b % EXAMPLES.length].slice());
+    const texts = ids.map(row => row.map(id => VOCAB[id]).join(' '));
+    const embeddingTable = [
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.2, 0.6, -0.1, 0.3, 0.4, -0.2, 0.1, 0.5],
+      [-0.3, 0.2, 0.5, 0.1, -0.1, 0.4, 0.6, 0.2],
+      [0.4, -0.1, 0.7, 0.2, 0.0, 0.3, -0.2, 0.5],
+      [0.5, 0.1, 0.2, -0.2, 0.6, 0.3, 0.0, -0.1],
+      [0.1, 0.4, -0.3, 0.6, 0.2, 0.0, 0.5, -0.2],
+      [-0.2, 0.3, 0.4, 0.0, 0.5, -0.1, 0.2, 0.6],
+      [0.3, -0.2, 0.1, 0.5, -0.3, 0.6, 0.4, 0.2]
+    ];
+    const embedding = ids.map(sample => sample.map(id => embeddingTable[id].slice()));
+    const blocks = [];
+    let hidden = embedding;
+    for (let layer = 0; layer < layers; layer++) {
+      const block = blockForward(hidden, layer);
+      blocks.push(block);
+      hidden = block.output;
+    }
+    const finalNorm = rmsNorm(hidden, [1.0, 0.98, 1.02, 1.0, 1.04, 0.96, 1.02, 1.0]);
+    const lmWeight = matrix(8, 8, 101, 0.04);
+    const logits = linear(finalNorm.output, lmWeight);
+    const lastLogits = logits.map(sample => [sample[sample.length - 1].slice()]);
+    const probs = mapRows(lastLogits, softmax);
+    const nextIds = probs.map(sample => [sample[0].reduce((best, p, i, row) => p > row[best] ? i : best, 0)]);
+    const nextTokens = nextIds.map(row => VOCAB[row[0]]);
+    const appendedIds = ids.map((row, b) => [...row, nextIds[b][0]]);
+    const ropeCos = Array.from({ length: 4 }, (_, t) => [Math.cos(t), Math.cos(t / 100)]);
+    const ropeSin = Array.from({ length: 4 }, (_, t) => [Math.sin(t), Math.sin(t / 100)]);
+    const causalMask = Array.from({ length: 4 }, (_, t) => Array.from({ length: 4 }, (_, j) => j > t ? -Infinity : 0));
+    return { config, vocab: VOCAB.slice(), ids, texts, embeddingTable, embedding, blocks, finalNorm, lmWeight,
+      logits, lastLogits, probs, nextIds, nextTokens, appendedIds, ropeCos, ropeSin, causalMask,
+      note: '所有矩阵数字均由这套固定、未训练的 mini Transformer 参数实际计算；为教学演示，预测没有语言意义。显示可四舍五入，计算使用完整双精度。B 大于 2 时循环使用两条输入；文本中的 <eos> 在这里是教学输入标记，演示继续计算一次 next-token，不执行真实服务的停止策略。' };
+  }
+
+  return { run, matrix, linear, rmsNorm, softmax, blockForward, swiglu };
+})();
+
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const state = {batch:2,layers:3,sample:0,head:0,position:2,layer:1,route:'full',key:'embedding',step:-1,playing:false,guided:false,calcStep:0};
+  let trace = ToyEngine.run(state), timer = null;
+  const fullKeys = ['text','tokenizer','embedding','blocks','finalnorm','lmhead','prob','next'];
+  const singleKeys = ['x','norm1','qkv','attn','add1','norm2','mlp','add2'];
+  const escape = x => String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const dims = a => Array.isArray(a) ? [a.length,...(a.length?dims(a[0]):[])] : [];
+  const fmt = x => x === -Infinity ? '−∞' : x === Infinity ? '∞' : x === null ? '—' : typeof x === 'number' ? (Math.abs(x)<0.0005 ? '0.000' : x.toFixed(3)) : String(x);
+  const tensor = (name,data,options={}) => ({name,data,...options});
+  const words = () => trace.ids[state.sample].map(i=>trace.vocab[i]);
+  const textTensor = (name,text) => ({name,text});
+  const slice = t => {
+    const shape = dims(t.data);
+    let a = t.data, note = '';
+    if (!t.static && shape.length>=3) { a=a[state.sample]; note='样本 '+state.sample; }
+    if (!t.static && shape.length===4) { a=a[state.head]; note+=' · Head '+state.head; }
+    if (!Array.isArray(a[0])) a=[a];
+    return {a,shape,note};
+  };
+  function matrix(t){
+    if(t.text!==undefined) return '<div class="matrix-block"><div class="matrix-title"><strong>'+escape(t.name)+'</strong></div><div class="raw-text">'+escape(t.text)+'</div></div>';
+    const {a,shape,note}=slice(t), col=t.cols||[];
+    const rowLabels=t.rows||((shape.length>=3&&!t.static&&a.length===4)?words().map((v,i)=>'t'+i+' '+v):[]);
+    const label=shape.join(' × ');
+    return '<details class="matrix-block matrix-disclosure" data-tensor="'+escape(t.name)+'"><summary><span class="matrix-title"><strong>'+escape(t.name)+'</strong><small>['+label+']'+(note?' · '+note:'')+'</small><span class="matrix-toggle"><span class="when-closed">展开数值</span><span class="when-open">收起数值</span></span></span></summary><div class="matrix-scroll"><table class="matrix" aria-label="'+escape(t.name+' ['+label+'] '+note)+'"><thead><tr><th>'+(t.axis||'行 / 列')+'</th>'+a[0].map((_,i)=>'<th>'+escape(col[i]===undefined?(t.integer?'t'+i:'c'+i):col[i])+'</th>').join('')+'</tr></thead><tbody>'+a.map((row,i)=>'<tr class="'+(a.length===4&&i===state.position&&!t.static?'chosen':'')+'"><th scope="row">'+escape(rowLabels[i]===undefined?(t.batchRows?'b'+i:i):rowLabels[i])+'</th>'+row.map(v=>'<td'+(v===-Infinity||v===null?' class="masked"':'')+'>'+escape(t.integer&&v!==null?String(v):fmt(v))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div></details>';
+  }
+  const T=(name,data,options)=>tensor(name,data,options);
+  const IDs=(name,data)=>T(name,data,{integer:true,batchRows:true});
+  const W=(name,data)=>T(name,data,{static:true});
+  const V=(name,data)=>T(name,data,{cols:trace.vocab,...(dims(data).length===3&&data[0].length===1?{rows:['t3 最后位置']}:{})});
+  const A=(name,data,options={})=>T(name,data,{cols:words().map((w,i)=>'t'+i+' '+w),axis:'Query / Key',...options});
+  const qkv = b => [T('Q（RoPE 后）',b.q),T('K（RoPE 后）',b.k),T('V',b.v)];
+  const operation=(title,formula,input,output)=>({title,formula,input,output});
+  const normSteps=n=>[
+    operation('逐元素平方','x²', [T('x',n.input)],[T('x²',n.squares)]),
+    operation('每行求均值','mean(x²)，只沿 8 个通道求均值',[T('x²',n.squares)],[T('mean(x²)',n.meanSquare)]),
+    operation('求 RMS','sqrt(mean(x²) + 0.00001)',[T('mean(x²)',n.meanSquare)],[T('RMS',n.rms)]),
+    operation('按行除以 RMS','x / RMS；每行共享一个除数',[T('x',n.input),T('RMS',n.rms)],[T('x / RMS',n.normalized)]),
+    operation('逐通道缩放','(x / RMS) ⊙ γ',[T('x / RMS',n.normalized),W('γ',n.gamma)],[T('归一化输出',n.output)])
+  ];
+  function describe(key,layer=state.layer){
+    const b=trace.blocks[layer-1], last=trace.blocks.at(-1);
+    const item=(title,formula,input,output,why,steps=[],params=[])=>({key,title,formula,input,output,why,steps,params,layer});
+    if(key==='text')return item('文本输入','保留样本和 token 顺序',[textTensor('原始文本',trace.texts.map((s,i)=>'样本 '+i+'：'+s).join('\n'))],[textTensor('送给 Tokenizer',trace.texts.map((s,i)=>'样本 '+i+'：'+s).join('\n'))],'文本在分词前仍是字符串，从 Token IDs 开始才是数字。');
+    if(key==='tokenizer')return item('Tokenizer','按本例词表查出整数 ID',[textTensor('Batch 文本',trace.texts.map((s,i)=>'样本 '+i+'：'+s).join('\n'))],[IDs('Token IDs',trace.ids)],'离散 ID 是下一步 Embedding 查表的行号。本例按空格分词，使用 8 词的小词表。',[
+      operation('词表查 ID','猫=1，追=2，老鼠=3，鸟=4，吃=5，米=6，<eos>=7',[textTensor('切分后的文本',trace.texts[state.sample])],[IDs('完整 Batch 的 IDs',trace.ids)])
+    ],[T('词表 ID',[trace.vocab.map((_,i)=>i)],{integer:true,static:true,cols:trace.vocab})]);
+    if(key==='embedding')return item('Embedding','X₀[b,t] = E[ids[b,t]]',[IDs('Token IDs',trace.ids)],[T('X₀',trace.embedding)],'把 ID 变成连续向量，后面的模块才能进行矩阵乘法。这里是查表，不是 ID 乘一个向量。',[
+      operation('按 ID 取行','每个 token ID 从 E 中查出 8 个数',[IDs('Token IDs',trace.ids),W('Embedding 参数 E',trace.embeddingTable)],[T('X₀',trace.embedding)])
+    ],[W('Embedding 参数 E',trace.embeddingTable)]);
+    if(key==='blocks')return item(state.layers+' × Decoder Block','X₀ → X₁ → … → X'+state.layers,[T('X₀',trace.embedding)],[T('X'+state.layers,last.output)],'每层接收上一层的真实输出，重复上下文混合与通道变换；每层有独立参数。');
+    if(key==='block')return item('Block '+layer,'RMSNorm → Attention → Add → RMSNorm → SwiGLU → Add',[T('X'+(layer-1),b.input)],[T('X'+layer,b.output)],'输入和输出的宽度相同，下一层可直接接收本层结果。');
+    if(key==='x')return item('输入表示 X','接收 '+(layer===1?'Embedding':'Block '+(layer-1))+' 的输出',[T(layer===1?'Embedding 输出':'上一层输出',b.input)],[T('X',b.input)],'Block 处理连续的 token 向量；这一节点只传递数据，不修改数值。');
+    if(key==='norm1'||key==='norm2'||key==='finalnorm'){
+      const n=key==='finalnorm'?trace.finalNorm:b[key];
+      return item(key==='norm1'?'第一次 RMSNorm':key==='norm2'?'第二次 RMSNorm':'Final RMSNorm','x / sqrt(mean(x²) + ε) ⊙ γ',[T(key==='norm2'?'H₁（第一次残差输出）':'输入 x',n.input)],[T(key==='norm1'?'N₁':key==='norm2'?'N₂':'Final Norm 输出',n.output)],'按 token 行稳定数值尺度，保留 Batch、位置和通道数；γ 是可学习的逐通道缩放参数。',normSteps(n),[W('γ',n.gamma)]);
+    }
+    if(key==='qkv')return item('Q / K / V 投影','N₁ × W → 分头 → Q/K 的 RoPE',[T('N₁',b.norm1.output)],qkv(b),'三组参数让同一个向量分别充当查询、匹配标签和内容。RoPE 把位置关系加入 Q/K，V 不旋转。',[
+      operation('三次矩阵乘法','Q=N₁WQ；K=N₁WK；V=N₁WV',[T('N₁',b.norm1.output)],[T('Q 投影',b.qFlat),T('K 投影',b.kFlat),T('V 投影',b.vFlat)]),
+      operation('拆成两个头','[B,4,8] → [B,4,2,4] → [B,2,4,4]',[T('Q 投影',b.qFlat),T('K 投影',b.kFlat),T('V 投影',b.vFlat)],[T('Q 分头',b.qBefore),T('K 分头',b.kBefore),T('V 分头',b.v)]),
+      operation('RoPE 位置旋转','相邻坐标对：(a cosθ − b sinθ, a sinθ + b cosθ)；θ=t / 10000^(2j/4)',[T('Q 分头',b.qBefore),T('K 分头',b.kBefore),W('cosθ',trace.ropeCos),W('sinθ',trace.ropeSin)],[T('Q（RoPE 后）',b.q),T('K（RoPE 后）',b.k)])
+    ],[W('WQ',b.wq),W('WK',b.wk),W('WV',b.wv)]);
+    if(key==='attn')return item('因果自注意力','softmax(QKᵀ / √4 + mask) V → 拼头 → Wo',qkv(b),[T('Attention 输出',b.attnOut)],'每个位置只读取自身和之前的 token。softmax 给出混合比例，再用这些比例汇总 V。',[
+      operation('Query 与 Key 点积','QKᵀ；行是 Query 位置，列是 Key 位置',[T('Q',b.q),T('K',b.k)],[A('QKᵀ',b.scores)]),
+      operation('缩放分数','除以 √dₕ = 2',[A('QKᵀ',b.scores)],[A('缩放后分数',b.scaled)]),
+      operation('屏蔽未来位置','对列号 > 行号的位置加 −∞',[A('缩放后分数',b.scaled),A('causal mask',trace.causalMask,{static:true,rows:words().map((w,i)=>'t'+i+' '+w)})],[A('mask 后分数',b.masked)]),
+      operation('逐行 softmax','exp(z−max(z)) / Σexp(z−max(z))',[A('mask 后分数',b.masked)],[A('注意力权重 A',b.attention)]),
+      operation('加权汇总内容','A × V',[A('A',b.attention),T('V',b.v)],[T('每头 context',b.context)]),
+      operation('拼接两个头','恢复 Head 0、Head 1 的 8 个通道',[T('Head 0 context',b.context.map(x=>x[0])),T('Head 1 context',b.context.map(x=>x[1]))],[T('拼接后的 context',b.merged)]),
+      operation('输出投影','context × Wo',[T('拼接后的 context',b.merged)],[T('Attention 输出',b.attnOut)])
+    ],[W('Wo',b.wo)]);
+    if(key==='add1')return item('第一次残差相加','H₁ = X + Attention 输出',[T('主干 X',b.input),T('Attention 输出',b.attnOut)],[T('H₁',b.residual1)],'逐元素相加，把上下文信息写回主干；原输入仍保留在结果中。第二个子层从这里接收输入。');
+    if(key==='mlp')return item('SwiGLU / MLP','[SiLU(N₂Wg) ⊙ (N₂Wu)] Wd',[T('N₂（第二次 RMSNorm 输出）',b.norm2.output)],[T('MLP 输出',b.mlp)],'每个 token 独立加工自己的通道：8 维扩成 16 维，非线性门控后压回 8 维。这里不会混合位置。',[
+      operation('Gate 与 Up 投影','g=N₂Wg；u=N₂Wu',[T('N₂',b.norm2.output)],[T('g',b.gate),T('u',b.up)]),
+      operation('SiLU 激活','SiLU(g) = g / (1 + exp(−g))',[T('g',b.gate)],[T('SiLU(g)',b.activated)]),
+      operation('逐元素门控','SiLU(g) ⊙ u',[T('SiLU(g)',b.activated),T('u',b.up)],[T('门控结果',b.gated)]),
+      operation('Down 投影','门控结果 × Wd；16 → 8',[T('门控结果',b.gated)],[T('MLP 输出',b.mlp)])
+    ],[W('Wg',b.wg),W('Wu',b.wu),W('Wd',b.wd)]);
+    if(key==='add2')return item('第二次残差相加','Y = H₁ + MLP 输出',[T('H₁',b.residual1),T('MLP 输出',b.mlp)],[T('Y = X'+layer,b.output)],'新加工的通道特征叠加到第一次残差结果上；Y 就是下一层的输入 X。');
+    if(key==='lmhead')return item('LM Head','logits = FinalNorm × Wlm',[T('Final Norm 输出',trace.finalNorm.output)],[V('所有位置的 logits',trace.logits)],'把 8 个隐藏通道变成对 8 个词表 token 的评分。下一步只取最后位置 t=3，避免把中间位置误当成下一词。',[
+      operation('词表投影','[B,4,8] × [8,8] → [B,4,8]',[T('Final Norm 输出',trace.finalNorm.output)],[V('所有位置 logits',trace.logits)]),
+      operation('取最后一个位置','logits[:, −1, :]，这里最后位置为 t=3',[V('所有位置 logits',trace.logits)],[V('最后位置 logits',trace.lastLogits)])
+    ],[T('Wlm',trace.lmWeight,{static:true,cols:trace.vocab})]);
+    if(key==='prob'){
+      const shifted=trace.lastLogits.map(x=>x.map(r=>r.map(v=>v-Math.max(...r))));
+      const exp=shifted.map(x=>x.map(r=>r.map(Math.exp)));
+      return item('Logits → 概率','只取 t=3；softmax 温度 = 1',[V('所有位置 logits',trace.logits)],[V('最后位置的概率',trace.probs)],'使用最后位置预测下一个 token。减去最大值不会改变 softmax 的结果，可避免指数溢出。',[
+        operation('取最后位置','logits[:,3,:]；保留一行',[V('所有位置 logits',trace.logits)],[V('最后位置 logits',trace.lastLogits)]),
+        operation('减去最大值','z − max(z)',[V('最后位置 logits',trace.lastLogits)],[V('平移后 logits',shifted)]),
+        operation('求指数','exp(z − max(z))',[V('平移后 logits',shifted)],[V('指数值',exp)]),
+        operation('归一化','除以该行指数值之和',[V('指数值',exp)],[V('概率（每行和为 1）',trace.probs)])
+      ]);
+    }
+    if(key==='next')return item('选择下一个 token','greedy：argmax(prob)，每条样本独立选择',[V('最后位置的概率',trace.probs)],[IDs('选中的 token ID',trace.nextIds),textTensor('对应词',trace.nextTokens.map((s,i)=>'样本 '+i+' → '+s).join('；')),IDs('追加后的 Token IDs',trace.appendedIds)],'本例使用确定性的贪心选择，取概率最大的 token。展示一次追加；未运行下一轮解码，也未模拟 KV cache。',[
+      operation('选择最高概率的 ID','argmax；本例不进行随机采样',[V('概率',trace.probs)],[IDs('下一个 token ID',trace.nextIds)]),
+      operation('追加到上下文','原来的 4 个 ID + 新 ID',[IDs('原 Token IDs',trace.ids),IDs('新 ID',trace.nextIds)],[IDs('下一轮的输入 IDs',trace.appendedIds)])
+    ]);
+    throw new Error('未知模块 '+key);
+  }
+  function sequence(){
+    return [...['text','tokenizer','embedding'].map(key=>({key,layer:1,kind:'full'})),{key:'block',layer:1,kind:'stack',enter:true},...singleKeys.map(key=>({key,layer:1,kind:'single'})),...Array.from({length:state.layers-1},(_,i)=>({key:'block',layer:i+2,kind:'stack'})),...['finalnorm','lmhead','prob','next'].map(key=>({key,layer:1,kind:'full'}))];
+  }
+  function rank(key,layer){
+    if(key==='blocks')return sequence().findIndex(x=>x.key==='block'&&x.layer===state.layers);
+    if(key==='block'&&layer===1)return sequence().findIndex(x=>x.key==='add2');
+    return sequence().findIndex(x=>x.key===key&&(x.kind!=='single'&&x.kind!=='stack'||x.layer===layer));
+  }
+  function visible(key,layer){const r=rank(key,layer);return !state.guided||state.step<0||r<0||r<=state.step;}
+  function inputVisible(key,layer){
+    if(!state.guided||state.step<0)return true;
+    if(key==='blocks'||key==='block'&&layer===1||key==='x'&&layer===1)return visible('embedding',1);
+    if((key==='block'||key==='x')&&layer>1)return visible('block',layer-1);
+    if(key==='finalnorm')return visible('block',state.layers);
+    const prev={tokenizer:'text',embedding:'tokenizer',norm1:'x',qkv:'norm1',attn:'qkv',add1:'attn',norm2:'add1',mlp:'norm2',add2:'mlp',lmhead:'finalnorm',prob:'lmhead',next:'prob'};
+    return !prev[key]||visible(prev[key],layer);
+  }
+  function rowHTML(d,{click=true,input=true,output=true,current=false}={}){
+    return '<div class="flow-row'+(current?' current':'')+'" data-module="'+escape(d.key||d.title)+'"><'+(click?'button':'div')+' class="module-node"'+(click?' data-open="'+escape(d.key)+'" data-layer="'+(d.layer||state.layer)+'"':'')+'><strong>'+escape(d.title)+'</strong>'+(current?'<span class="current-tag">当前步骤</span>':'')+'<span class="formula">'+escape(d.formula||'')+'</span>'+(click?'<small>查看内部计算 →</small>':'')+'</'+(click?'button':'div')+'><div class="io"><div class="io-section"><div class="io-label">输入</div>'+(input?d.input.map(matrix).join(''):'<div class="pending">等待上一模块的输出…</div>')+'</div><div class="io-section"><div class="io-label">输出</div>'+(output?d.output.map(matrix).join(''):'<div class="pending">等待流程运行到这里…</div>')+'</div></div></div>';
+  }
+  function flowHTML(keys,layer=state.layer){
+    return '<div class="flow">'+keys.map((key,i)=>{
+      const d=describe(key,layer),s=sequence()[state.step];
+      return (i?'<span class="flow-arrow" aria-hidden="true">↓</span>':'')+rowHTML(d,{input:inputVisible(key,layer),output:visible(key,layer),current:!!s&&s.key===key&&(s.kind==='full'||s.layer===layer)});
+    }).join('')+'</div>';
+  }
+  function routeFor(key,layer){
+    if(key==='blocks')return {route:'stack',layer};
+    if(key==='block')return {route:'single',layer};
+    return {route:'module',key,layer};
+  }
+  function stop(){state.playing=false;clearTimeout(timer);timer=null;}
+  function go(route,key=state.key,layer=state.layer,{sync=true}={}){
+    stop();state.guided=false;state.calcStep=0;state.route=route;state.key=key;state.layer=Math.max(1,Math.min(state.layers,layer));
+    if(sync){
+      const idx=sequence().findIndex(x=>x.key===key&&(x.kind==='full'||x.layer===state.layer));
+      if(route==='module')state.step=idx;
+      if(route==='single'||route==='stack')state.step=sequence().findIndex(x=>x.key==='block'&&x.layer===state.layer);
+    }
+    render();$('breadcrumbs').scrollIntoView({block:'start',behavior:'auto'});
+  }
+  function navHTML(){
+    let html='<button class="return" data-route="full">'+(state.route==='full'?'完整模型':'← 返回完整模型')+'</button>';
+    const blockScope=['single','stack'].includes(state.route)||(singleKeys.includes(state.key)&&['module','calc','params'].includes(state.route));
+    if(blockScope&&state.route!=='stack')html+='<button class="return" data-route="stack">← 返回多层 Block</button>';
+    if(blockScope&&['module','calc','params'].includes(state.route))html+='<button class="return" data-route="single">← 返回 Block '+state.layer+'</button>';
+    if(['calc','params'].includes(state.route))html+='<button class="return" data-route="module">← 返回模块</button>';
+    return html;
+  }
+  function render({preserveMatrices=false}={}){
+    const openMatrices=preserveMatrices?[...$('view').querySelectorAll('.matrix-disclosure')].map(el=>el.open):[];
+    $('sample').innerHTML=trace.ids.map((ids,i)=>'<option value="'+i+'"'+(state.sample===i?' selected':'')+'>'+i+' · '+escape(ids.map(x=>trace.vocab[x]).join(' '))+'</option>').join('');
+    $('position').innerHTML=words().map((w,i)=>'<option value="'+i+'"'+(state.position===i?' selected':'')+'>t'+i+' · '+escape(w)+'</option>').join('');
+    $('slice-note').textContent='数值默认折叠，点击矩阵标题展开完整行列。三维张量查看样本 '+state.sample+'，四维张量再选择 Head '+state.head+'；标题保留完整 Batch 形状。高亮位置仅便于追踪，生成始终使用最后位置 t=3。';
+    $('head').value=state.head;
+    $('breadcrumbs').innerHTML=navHTML();
+    let html='';
+    if(state.route==='full')html='<div class="view-title"><h2>完整模型</h2><p class="muted">右侧是各模块的输入和输出。点击左侧模块逐层展开。</p></div>'+flowHTML(fullKeys);
+    else if(state.route==='stack'){
+      html='<div class="view-title"><h2>层与层之间</h2><div class="controls"><label>Block 层数 <input id="layers" type="range" min="2" max="6" step="1" value="'+state.layers+'"><output>'+state.layers+'</output></label></div><p class="muted">上一层的输出矩阵，原样传入下一层。点击某层进入内部。</p></div><div class="flow">';
+      for(let l=1;l<=state.layers;l++){const d=describe('block',l),s=sequence()[state.step];html+=(l>1?'<span class="flow-arrow">↓</span>':'')+rowHTML(d,{input:inputVisible('block',l),output:visible('block',l),current:!!s&&s.layer===l&&(s.kind==='stack'||s.kind==='single')});}
+      html+='</div>';
+    }else if(state.route==='single')html='<div class="view-title"><h2>Block '+state.layer+'</h2><p class="muted">第二个子层输入来自第一次残差 H₁。每个矩阵都属于当前这一层。</p></div>'+flowHTML(singleKeys);
+    else{
+      const d=describe(state.key),prefix=singleKeys.includes(state.key)?'Block '+state.layer+' · ':'';
+      html='<div class="view-title"><h2>'+escape(prefix+d.title)+(state.route==='calc'?' · 逐步计算':state.route==='params'?' · 参数矩阵':'')+'</h2></div>';
+      if(state.route==='params')html+='<p class="muted">固定的教学参数；所有样本共享这些数值。Block 的参数随层号变化。</p><div class="weight-grid">'+d.params.map(matrix).join('')+'</div>';
+      else if(state.route==='calc')html+='<div class="operation-info"><p>'+escape(d.why)+'</p>'+(d.params.length?'<button class="text-link" data-route="params">查看本模块使用的全部权重矩阵 →</button>':'')+'</div><nav class="controls" aria-label="模块内部计算步骤">'+d.steps.map((s,i)=>'<button data-calc="'+i+'"'+(state.calcStep===i?' class="primary" aria-current="step"':'')+'>'+(i+1)+'. '+escape(s.title)+'</button>').join('')+'</nav>'+rowHTML(d.steps[state.calcStep],{click:false})+'<div class="actions"><button data-calc="'+(state.calcStep-1)+'"'+(state.calcStep===0?' disabled':'')+'>← 模块内上一步</button><span class="muted">'+(state.calcStep+1)+' / '+d.steps.length+'</span><button data-calc="'+(state.calcStep+1)+'"'+(state.calcStep===d.steps.length-1?' disabled':'')+'>模块内下一步 →</button></div>';
+      else html+='<div class="operation-info"><p><strong>为什么这样做：</strong>'+escape(d.why)+'</p><div class="actions">'+(d.steps.length?'<button class="primary" data-route="calc">展开逐步计算 →</button>':'')+(d.params.length?'<button data-route="params">查看参数矩阵 →</button>':'')+'</div></div>'+rowHTML(d,{click:false,current:true});
+    }
+    $('view').innerHTML=html;
+    if(preserveMatrices)$('view').querySelectorAll('.matrix-disclosure').forEach((el,i)=>{el.open=!!openMatrices[i];});
+    $('view').classList.remove('view');void $('view').offsetWidth;$('view').classList.add('view');
+    updateStatus();
+  }
+  function updateStatus(){
+    const seq=sequence(),s=seq[state.step];
+    $('play').disabled=state.playing;$('play').textContent=state.playing?'▶ 播放中…':state.step===seq.length-1?'↻ 重新播放':state.step>=0?'▶ 继续播放':'▶ 自动播放完整流程';
+    $('prev').disabled=state.step<=0;$('next').disabled=state.step>=seq.length-1;$('pause').hidden=!state.playing;
+    $('step-count').textContent='第 '+Math.max(0,state.step+1)+' / '+seq.length+' 步';
+    $('progress-bar').style.width=((state.step+1)/seq.length*100)+'%';
+    const p=document.querySelector('.progress');p.setAttribute('aria-valuemax',seq.length);p.setAttribute('aria-valuenow',state.step+1);
+    if(s){
+      const d=describe(s.key,s.layer);
+      $('stage').textContent=s.kind==='stack'?'层间传递':s.kind==='single'?(['norm2','mlp','add2'].includes(s.key)?'MLP 子层':'Attention 子层'):['text','tokenizer','embedding'].includes(s.key)?'输入与表示':'输出与生成';
+      $('step-title').textContent=(s.kind==='single'?'Block '+s.layer+' · ':'')+d.title;
+      $('narration').textContent=s.enter?'已接收 Embedding 输出，接下来展开 Block 1 内部；本层输出会在第二次残差完成后出现。':d.why;
+    }else{$('stage').textContent='自由查看';$('step-title').textContent=['module','calc','params'].includes(state.route)?(singleKeys.includes(state.key)?'Block '+state.layer+' · ':'')+describe(state.key).title:state.route==='single'?'Block '+state.layer:state.route==='stack'?'多层 Block':'完整模型';$('narration').textContent='点击模块查看内部计算，或按“下一步”沿模型逐步运行。';}
+  }
+  function showStep(index){
+    state.guided=true;state.calcStep=0;state.step=Math.max(0,Math.min(sequence().length-1,index));const s=sequence()[state.step];state.layer=s.layer;state.key=s.key;state.route=s.kind==='stack'?'stack':'module';render();document.querySelector('.status').scrollIntoView({block:'start',behavior:'auto'});
+  }
+  function start(){
+    stop();if(state.step===sequence().length-1)state.step=-1;state.playing=true;
+    const tick=()=>{if(!state.playing)return;if(state.step>=sequence().length-1){stop();updateStatus();return;}showStep(state.step+1);timer=setTimeout(tick,5500);};tick();
+  }
+  function recalculate(){stop();trace=ToyEngine.run(state);state.sample=Math.min(state.sample,state.batch-1);state.layer=Math.min(state.layer,state.layers);state.step=-1;state.guided=false;render();}
+  $('play').addEventListener('click',start);
+  $('pause').addEventListener('click',()=>{stop();updateStatus();});
+  $('prev').addEventListener('click',()=>{stop();showStep(state.step-1);});
+  $('next').addEventListener('click',()=>{stop();showStep(state.step+1);});
+  $('batch').addEventListener('change',e=>{state.batch=Number(e.target.value);recalculate();});
+  $('sample').addEventListener('change',e=>{state.sample=Number(e.target.value);stop();render({preserveMatrices:true});});
+  $('head').addEventListener('change',e=>{state.head=Number(e.target.value);stop();render({preserveMatrices:true});});
+  $('position').addEventListener('change',e=>{state.position=Number(e.target.value);stop();render({preserveMatrices:true});});
+  $('matrix-app').addEventListener('input',e=>{if(e.target.id==='layers'){state.layers=Number(e.target.value);recalculate();}});
+  $('matrix-app').addEventListener('click',e=>{
+    const calc=e.target.closest('[data-calc]');if(calc){stop();state.calcStep=Number(calc.dataset.calc);render();return;}
+    const open=e.target.closest('[data-open]');if(open){const r=routeFor(open.dataset.open,Number(open.dataset.layer));go(r.route,r.key||open.dataset.open,r.layer);return;}
+    const nav=e.target.closest('[data-route]');if(nav)go(nav.dataset.route,state.key,state.layer,{sync:false});
+  });
+  // Exposes the same immutable-by-convention trace for local reproducibility checks.
+  window.transformerExplorer={getTrace:()=>trace,getState:()=>({...state}),describe:(key,layer)=>describe(key,layer),sequence};
+  render();
+})();
+
+</script>
+</body>
+</html>
